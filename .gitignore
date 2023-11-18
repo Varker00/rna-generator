@@ -1,0 +1,5 @@
+# Ignore files in original_data folder
+/original_data/*
+
+# Ignore files in synthetic_data folder
+/synthetic_data/*
