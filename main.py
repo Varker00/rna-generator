@@ -82,19 +82,19 @@ def main():
     gan_trainer = GANTrainer(processor, generator, discriminator, latent_dim, generator_lr, discriminator_lr, optimizer, id)
 
     # Trenowanie GAN
-    d_loss, g_loss, gradient_norm, fid_scores = gan_trainer.train(processed_data, epochs, batch_size, save_interval, checkpoint_dir)
+    d_loss, g_loss, gradient_norm, fd_scores = gan_trainer.train(processed_data, epochs, batch_size, save_interval, checkpoint_dir)
 
     # Zapisywanie i wykresy wyników
-    save_results(d_loss, g_loss, gradient_norm, fid_scores, results_path)
-    plot_results(d_loss, g_loss, gradient_norm, fid_scores, results_path)
+    save_results(d_loss, g_loss, gradient_norm, fd_scores, results_path)
+    plot_results(d_loss, g_loss, gradient_norm, fd_scores, results_path)
 
     # Dotrenowywanie GAN
     epochs = 5000
-    d_loss, g_loss, gradient_norm, fid_scores = gan_trainer.train(processed_data, epochs, batch_size, save_interval, checkpoint_dir)
+    d_loss, g_loss, gradient_norm, fd_scores = gan_trainer.train(processed_data, epochs, batch_size, save_interval, checkpoint_dir)
 
     # Zapisywanie i wykresy wyników
-    save_results(d_loss, g_loss, gradient_norm, fid_scores, results_path)
-    plot_results(d_loss, g_loss, gradient_norm, fid_scores, results_path)
+    save_results(d_loss, g_loss, gradient_norm, fd_scores, results_path)
+    plot_results(d_loss, g_loss, gradient_norm, fd_scores, results_path)
 
     # Generowanie danych
     num_samples_to_generate = processed_data.shape[0]

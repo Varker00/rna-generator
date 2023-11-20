@@ -7,8 +7,7 @@ from keras.models import Model
 from keras.layers import Input
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.callbacks import TensorBoard
-from data_process import DataProcessor
-from utils import compute_gradient_norm, calculate_fid, inverse_scale_data, remove_checkpoints
+from utils import compute_gradient_norm, calculate_fd, inverse_scale_data, remove_checkpoints
 
 class GANTrainer:
     def __init__(self, data_processor, generator, discriminator, latent_dim, g_lr, d_lr, opt, id):
@@ -21,7 +20,7 @@ class GANTrainer:
         self.combined_optimizer = None
         self.discriminator_optimizer = None
         self.compile_models(g_lr, d_lr, opt)
-        self.d_loss_list, self.g_loss_list, self.fid_score_list, self.gradient_norm_list = [], [], [], []
+        self.d_loss_list, self.g_loss_list, self.fd_score_list, self.gradient_norm_list = [], [], [], []
         log_dir = f'logs/GAN/{self.dataprocessor.data.shape[1]}/{id}'
         self.tensorboard = TensorBoard(log_dir=log_dir)
         self.tensorboard.set_model(self.combined)
@@ -64,7 +63,7 @@ class GANTrainer:
     def train(self, data, epochs, batch_size, save_interval, checkpoint_dir):
         X_train = data.values
         
-        best_fid_score = 10000000
+        best_fd_score = 10000000
         patience_stop, patience_decay = 10, 3
 
         remove_checkpoints(checkpoint_dir)
@@ -99,7 +98,7 @@ class GANTrainer:
             self.tensorboard.on_epoch_end(epoch, logs)
 
             self.last_epoch = epoch
-            
+
             # Save Progress
             if epoch % save_interval == 0:
                 original_data = self.dataprocessor.get_original_data()
@@ -107,18 +106,18 @@ class GANTrainer:
 
                 generated_data = self.generate_data(data.shape[0])
                 generated_data = inverse_scale_data(generated_data, original_min, original_max)
-                fid_score = calculate_fid(original_data, generated_data)
-                self.fid_score_list.append(fid_score)
-                logs = {'fid_score': fid_score}
+                fd_score = calculate_fd(original_data, generated_data)
+                self.fd_score_list.append(fd_score)
+                logs = {'fd_score': fd_score}
                 self.tensorboard.on_epoch_end(epoch, logs)
-                self.print_progress(epoch, d_loss, g_loss, gradient_norm, fid_score, time.time() - start)
+                self.print_progress(epoch, d_loss, g_loss, gradient_norm, fd_score, time.time() - start)
 
-                if fid_score < best_fid_score:
-                    best_fid_score = fid_score
+                if fd_score < best_fd_score:
+                    best_fd_score = fd_score
                     remove_checkpoints(checkpoint_dir)
                     self.checkpoint.save(file_prefix=os.path.join(checkpoint_dir, "ckpt"))
                     patience_stop, patience_decay = 10, 3
-                    print(f"Checkpoint saved at epoch {epoch} with FID score: {fid_score}")
+                    print(f"Checkpoint saved at epoch {epoch} with FD score: {fd_score}")
                 else:
                     patience_stop -= 1
                     patience_decay -= 1
@@ -132,10 +131,10 @@ class GANTrainer:
                     
         self.load_checkpoint(checkpoint_dir)
         remove_checkpoints(checkpoint_dir)
-        return self.d_loss_list, self.g_loss_list, self.gradient_norm_list, self.fid_score_list
+        return self.d_loss_list, self.g_loss_list, self.gradient_norm_list, self.fd_score_list
     
-    def print_progress(self, epoch, d_loss, g_loss, gradient_norm, fid_score, elapsed_time):
-        print(f"{epoch} [D loss: {d_loss:.6f}] [G loss: {g_loss:.6f}] [D gradient norm: {gradient_norm:.6f}] [FID score: {fid_score:.6f}]")
+    def print_progress(self, epoch, d_loss, g_loss, gradient_norm, fd_score, elapsed_time):
+        print(f"{epoch} [D loss: {d_loss:.6f}] [G loss: {g_loss:.6f}] [D gradient norm: {gradient_norm:.6f}] [FD score: {fd_score:.6f}]")
         print(f"Time for epoch {epoch + 1} is {elapsed_time:.2f} sec")
 
     def adjust_learning_rate(self, patience_decay):

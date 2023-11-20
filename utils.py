@@ -54,7 +54,7 @@ def inverse_scale_data(generated_data, original_min, original_max):
     return generated_data
 
 
-def calculate_fid(real_data, generated_data):
+def calculate_fd(real_data, generated_data):
     # Przygotowanie danych
     real_data = real_data.astype('float32')
     generated_data = generated_data.astype('float32')
@@ -79,19 +79,19 @@ def calculate_fid(real_data, generated_data):
     trace_sum = tf.cast(trace_sum, tf.float32)
     print(f"ssdiff: {ssdiff}, trace_sum: {trace_sum}")
 
-    fid_score = ssdiff + trace_sum
+    fd_score = ssdiff + trace_sum
 
-    return fid_score
+    return fd_score
 
-def save_results(d_loss_list, g_loss_list, gradient_norm_list, fid_score_list, file_path):
-    fid_scores = [score.numpy() if isinstance(score, tf.Tensor) else score for score in fid_score_list]
+def save_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, file_path):
+    fd_scores = [score.numpy() if isinstance(score, tf.Tensor) else score for score in fd_score_list]
     results = pd.DataFrame({
         'd_loss': d_loss_list,
         'g_loss': g_loss_list,
         'gradient_norm': gradient_norm_list,
     })
-    fid_results = pd.DataFrame({
-        'fid_score': fid_scores
+    fd_results = pd.DataFrame({
+        'fd_score': fd_scores
     })
     file_path = file_path + 'results_1.csv'
     for i in range(2, 10):
@@ -100,11 +100,11 @@ def save_results(d_loss_list, g_loss_list, gradient_norm_list, fid_score_list, f
         file_path = file_path[:-5] + str(i) + '.csv'
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     results.to_csv(file_path, index=False)
-    file_path = file_path[:-4] + '_fid.csv'
+    file_path = file_path[:-4] + '_fd.csv'
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    fid_results.to_csv(file_path, index=False)
+    fd_results.to_csv(file_path, index=False)
 
-def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fid_score_list, file_path):
+def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, file_path):
     plt.figure(figsize=(10, 12))
 
     # Plotting discriminator and generator losses
@@ -124,7 +124,7 @@ def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fid_score_list, f
 
     # Plotting FD scores
     plt.subplot(3, 1, 3)
-    plt.plot(fid_score_list, label='FD Score', color='green')
+    plt.plot(fd_score_list, label='FD Score', color='green')
     plt.title('FD Score')
     plt.ylabel('Value')
     plt.xlabel('Epoch')
