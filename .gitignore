@@ -3,3 +3,21 @@
 
 # Ignore files in synthetic_data folder
 /synthetic_data/*
+
+# Ignore files in checkpoints folder
+/checkpoints/*
+
+# Ignore files in results folder
+/results/*
+
+# Ignore files in notebooks folder
+/notebooks/*
+
+# Ignore files in logs folder
+/logs/*
+
+#Ignore python cache files
+*.pyc
+
+# Ignore files in models folder
+/models/*
