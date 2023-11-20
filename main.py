@@ -44,10 +44,10 @@ def main():
         'num_layers_discriminator': 2,
         'num_neurons_discriminator': 128,
         'dropout_discriminator': 0.2,
-        'batch_size': 16,
-        'g_lr': 0.0001,
-        'd_lr': 0.0001,
-        'optimizer': 'RMSprop'
+        'batch_size': 64,
+        'g_lr': 0.001,
+        'd_lr': 0.001,
+        'optimizer': 'Adam'
     }
 
     # Parametry GAN

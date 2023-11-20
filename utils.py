@@ -113,6 +113,8 @@ def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, fi
     plt.plot(g_loss_list, label='Generator Loss')
     plt.title('GAN Losses')
     plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.yscale('log')
     plt.legend()
 
     # Plotting gradient norm
@@ -120,6 +122,8 @@ def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, fi
     plt.plot(gradient_norm_list, label='Gradient Norm', color='orange')
     plt.title('Gradient Norm')
     plt.ylabel('Value')
+    plt.xlabel('Epoch')
+    plt.yscale('log')
     plt.legend()
 
     # Plotting FD scores
@@ -128,6 +132,7 @@ def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, fi
     plt.title('FD Score')
     plt.ylabel('Value')
     plt.xlabel('Epoch')
+    plt.yscale('log')
     plt.legend()
 
     plt.tight_layout()
