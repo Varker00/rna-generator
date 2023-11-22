@@ -1,4 +1,6 @@
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 import time
 import logging
 import tensorflow as tf
@@ -12,8 +14,8 @@ from WGANGP_trainer import WGANGPTrainer
 from utils import save_results, plot_results, save_hyperparams, calculate_fd, inverse_scale_data
 from global_variables import EPOCHS
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
-for gpu in gpus: tf.config.experimental.set_memory_growth(gpu, True)
+gpu_available = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpu_available[0], True)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
@@ -21,7 +23,7 @@ logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
 MODEL = 'GAN'           # 'GAN', 'WGAN', 'WGANWC', 'WGAN-GP'
 NUM_FEATURES = 200      # 25, 50, 100, 200, 500, 1000, 2000, 5000
-# EPOCHS = 1000
+# EPOCHS = 5000
 
 def objective(trial):
     latent_dim = trial.suggest_int('latent_dim', 32, 128)

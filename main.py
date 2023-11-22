@@ -1,4 +1,6 @@
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 import time
 import logging
 import tensorflow as tf
@@ -11,8 +13,8 @@ from WGANGP_trainer import WGANGPTrainer
 from utils import save_results, plot_results, save_hyperparams
 from global_variables import EPOCHS
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
-for gpu in gpus: tf.config.experimental.set_memory_growth(gpu, True)
+gpu_available = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpu_available[0], True)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
