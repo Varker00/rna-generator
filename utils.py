@@ -85,33 +85,40 @@ def calculate_fd(real_data, generated_data):
 
 def save_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, file_path):
     fd_scores = [score.numpy() if isinstance(score, tf.Tensor) else score for score in fd_score_list]
-    results = pd.DataFrame({
+    d_results = pd.DataFrame({
         'd_loss': d_loss_list,
-        'g_loss': g_loss_list,
         'gradient_norm': gradient_norm_list,
+    })
+    g_results = pd.DataFrame({
+        'g_loss': g_loss_list,
     })
     fd_results = pd.DataFrame({
         'fd_score': fd_scores
     })
-    file_path = file_path + 'results_1.csv'
+    file_path = file_path + 'results_1_d.csv'
     for i in range(2, 10):
         if not os.path.exists(file_path):
             break
-        file_path = file_path[:-5] + str(i) + '.csv'
+        file_path = file_path[:-7] + str(i) + '_d.csv'
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    results.to_csv(file_path, index=False)
-    file_path = file_path[:-4] + '_fd.csv'
+    d_results.to_csv(file_path, index=False)
+
+    file_path = file_path[:-6] + '_g.csv'
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    g_results.to_csv(file_path, index=False)
+
+    file_path = file_path[:-6] + '_fd.csv'
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     fd_results.to_csv(file_path, index=False)
 
-def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, file_path):
+def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, save_interval, file_path):
     plt.figure(figsize=(10, 12))
 
     # Plotting discriminator and generator losses
     plt.subplot(3, 1, 1)
     plt.plot(d_loss_list, label='Discriminator Loss')
     plt.plot(g_loss_list, label='Generator Loss')
-    plt.title('GAN Losses')
+    plt.title('Discriminator and Generator Loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.yscale('log')
@@ -126,10 +133,10 @@ def plot_results(d_loss_list, g_loss_list, gradient_norm_list, fd_score_list, fi
     plt.yscale('log')
     plt.legend()
 
-    # Plotting FD scores
+    # Plotting FD scores 
     plt.subplot(3, 1, 3)
-    plt.plot(fd_score_list, label='FD Score', color='green')
-    plt.title('FD Score')
+    plt.plot(np.arange(len(fd_score_list)) * save_interval, fd_score_list, label='FD Score', color='green')
+    plt.title('Fréchet Distance Score')
     plt.ylabel('Value')
     plt.xlabel('Epoch')
     plt.yscale('log')

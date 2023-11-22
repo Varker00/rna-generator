@@ -7,15 +7,17 @@ from keras.models import Model
 from keras.layers import Input
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.callbacks import TensorBoard
-from utils import compute_gradient_norm, calculate_fd, inverse_scale_data, remove_checkpoints
+from utils import compute_gradient_norm, calculate_fd, inverse_scale_data, remove_checkpoints, wasserstein_loss
 from global_variables import EPOCHS
 
 # EPOCHS = 1000
 
-class GANTrainer:
-    def __init__(self, data_processor, generator, discriminator, latent_dim, g_lr, d_lr, opt, id):
+class WGANWCTrainer:
+    def __init__(self, data_processor, generator, discriminator, latent_dim, g_lr, d_lr, opt, id, n_critic, weight_clip):
         self.latent_dim = latent_dim
         self.opt = opt
+        self.n_critic = n_critic
+        self.weight_clip = weight_clip
         self.dataprocessor = data_processor
         self.generator = generator
         self.discriminator = discriminator
@@ -24,7 +26,7 @@ class GANTrainer:
         self.discriminator_optimizer = None
         self.compile_models(g_lr, d_lr, opt)
         self.d_loss_list, self.g_loss_list, self.fd_score_list, self.gradient_norm_list = [], [], [], []
-        self.log_dir = f'logs/GAN/{self.dataprocessor.data.shape[1]}/{EPOCHS}/{id}'
+        self.log_dir = f'logs/WGANWC/{self.dataprocessor.data.shape[1]}/{EPOCHS}/{id}'
         self.tensorboard = TensorBoard(log_dir=self.log_dir)
         self.tensorboard.set_model(self.combined)
         self.last_epoch = 0
@@ -48,7 +50,7 @@ class GANTrainer:
             self.discriminator_optimizer = RMSprop(learning_rate=d_lr)
         elif opt == 'Adam':
             self.discriminator_optimizer = Adam(learning_rate=d_lr)
-        self.discriminator.compile(loss='binary_crossentropy', optimizer=self.discriminator_optimizer)
+        self.discriminator.compile(loss=wasserstein_loss, optimizer=self.discriminator_optimizer)
 
         z = Input(shape=(self.latent_dim,))
         generated_data = self.generator(z)
@@ -61,7 +63,7 @@ class GANTrainer:
             self.combined_optimizer = RMSprop(learning_rate=g_lr)
         elif opt == 'Adam':
             self.combined_optimizer = Adam(learning_rate=g_lr)
-        self.combined.compile(loss='binary_crossentropy', optimizer=self.combined_optimizer)
+        self.combined.compile(loss=wasserstein_loss, optimizer=self.combined_optimizer)
     
     def train(self, data, epochs, batch_size, save_interval, checkpoint_dir):
         X_train = data.values
@@ -74,20 +76,26 @@ class GANTrainer:
 
         for epoch in range(self.last_epoch, self.last_epoch+epochs):
             start = time.time()
+            d_loss = 0
+            gradient_norm = 0
+            for _ in range(self.n_critic):
+                # Train Discriminator
+                self.discriminator.trainable = True
+                idx = np.random.randint(0, X_train.shape[0], batch_size)
+                real_data = X_train[idx]
+                noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
+                generated_data = self.generator.predict(noise, verbose=0)
+                d_loss_real = self.discriminator.train_on_batch(real_data, np.ones((batch_size, 1), dtype=np.float32))
+                d_loss_fake = self.discriminator.train_on_batch(generated_data, -np.ones((batch_size, 1), dtype=np.float32))
+                d_loss = d_loss_real - d_loss_fake
 
-            # Train Discriminator
-            self.discriminator.trainable = True
-            idx = np.random.randint(0, X_train.shape[0], batch_size)
-            real_data = X_train[idx]
-            noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
-            generated_data = self.generator.predict(noise, verbose=0)
-            d_loss_real = self.discriminator.train_on_batch(real_data, np.ones((batch_size, 1), dtype=np.float32))
-            d_loss_fake = self.discriminator.train_on_batch(generated_data, np.zeros((batch_size, 1), dtype=np.float32))
-            d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+                for l in self.discriminator.layers:
+                    weights = l.get_weights()
+                    weights = [np.clip(w, -self.weight_clip, self.weight_clip) for w in weights]
+                    l.set_weights(weights)
 
-            gradient_norm = compute_gradient_norm(self.discriminator, real_data, generated_data)
-            self.gradient_norm_list.append(gradient_norm)
-
+                gradient_norm = compute_gradient_norm(self.discriminator, real_data, generated_data)
+            
             # Train Generator
             self.discriminator.trainable = False
             noise = np.random.normal(0, 1, (batch_size, self.latent_dim))
@@ -95,6 +103,7 @@ class GANTrainer:
             g_loss = self.combined.train_on_batch(noise, valid_y)
 
             self.d_loss_list.append(d_loss)
+            self.gradient_norm_list.append(gradient_norm)
             self.g_loss_list.append(g_loss)
 
             logs = {'d_loss': d_loss, 'g_loss': g_loss, 'gradient_norm': gradient_norm}
