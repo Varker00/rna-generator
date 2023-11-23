@@ -20,8 +20,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
 MODEL = 'GAN'        # 'GAN', 'WGAN', 'WGANWC', 'WGAN-GP'
-NUM_FEATURES = 200      # 25, 50, 100, 200, 500, 1000, 2000, 5000
-# EPOCHS = 1000
+NUM_FEATURES = 25      # 25, 50, 100, 200, 500, 1000, 2000
+# EPOCHS = 5000
 
 def main():
     # Identification of the experiment

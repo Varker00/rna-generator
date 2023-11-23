@@ -1,4 +1,4 @@
-EPOCHS = 1000
+EPOCHS = 5000
 
 def main():
     pass
