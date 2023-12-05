@@ -21,6 +21,3 @@
 
 # Ignore files in models folder
 /models/*
-
-# Ignore db files
-*.db
