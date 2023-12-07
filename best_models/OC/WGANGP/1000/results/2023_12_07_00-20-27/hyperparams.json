@@ -1,0 +1,15 @@
+{
+    "latent_dim": 119,
+    "num_layers_generator": 4,
+    "num_neurons_generator": 49,
+    "num_layers_discriminator": 2,
+    "num_neurons_discriminator": 427,
+    "dropout_discriminator": 0.19919025108932564,
+    "batch_size": 32,
+    "g_lr": 0.0008020053764185552,
+    "d_lr": 0.00030759396179823144,
+    "optimizer": "RMSprop",
+    "n_critic": 1,
+    "weight_clip": -1,
+    "lambda_gp": 4.916643027849015
+}
